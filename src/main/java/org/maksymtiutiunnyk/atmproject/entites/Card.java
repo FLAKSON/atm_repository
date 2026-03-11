@@ -90,4 +90,14 @@ public class Card {
         }
         return normalizedPin;
     }
+
+    public static String validateEnteredPan(String pan) {
+        pan = pan.trim();
+        Pattern pattern = Pattern.compile("\\d{8}");
+        Matcher matcher = pattern.matcher(pan);
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException("Pan must contains 8 characters! ");
+        }
+        return pan;
+    }
 }

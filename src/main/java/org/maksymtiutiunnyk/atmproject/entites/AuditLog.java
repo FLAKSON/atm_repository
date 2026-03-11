@@ -42,7 +42,7 @@ public class AuditLog {
     private String message;
 
     @Getter
-    @JoinColumn(name = "session_id", nullable = false)
+    @JoinColumn(name = "session_id")
     @ManyToOne(fetch = FetchType.LAZY)
     private Session session;
 
@@ -52,7 +52,7 @@ public class AuditLog {
     private Atm atm;
 
     @Getter
-    @JoinColumn(name = "card_id", nullable = false)
+    @JoinColumn(name = "card_id")
     @ManyToOne(fetch = FetchType.LAZY)
     private Card card;
 
@@ -66,9 +66,7 @@ public class AuditLog {
         Objects.requireNonNull(auditLogActorType, "auditLogActorType is null");
         Objects.requireNonNull(auditSeverity, "auditSeverity is null");
         Objects.requireNonNull(message, "message is null");
-        Objects.requireNonNull(session, "session is null");
         Objects.requireNonNull(atm, "atm is null");
-        Objects.requireNonNull(card, "card is null");
         AuditLog auditLog = new AuditLog();
         auditLog.auditLogStatuses = auditLogStatus;
         auditLog.auditLogActorsType = auditLogActorType;

@@ -49,13 +49,10 @@ public class Customer {
         Objects.requireNonNull(name, "name is null");
         Objects.requireNonNull(surname, "surname is null");
         Objects.requireNonNull(passportId, "passportId is null");
-        validatePassportFormat(passportId);
-        validateName(name);
-        validateSurname(surname);
         Customer customer = new Customer();
-        customer.name = name;
-        customer.surname = surname;
-        customer.passportId = passportId;
+        customer.passportId = validatePassportFormat(passportId);
+        customer.name = validateName(name);
+        customer.surname = validateSurname(surname);
         customer.cards = new ArrayList<>();
         return customer;
     }
@@ -63,12 +60,12 @@ public class Customer {
     public static String validatePassportFormat(String passportId) {
         Objects.requireNonNull(passportId, "PassportId is null");
         passportId = passportId.trim().toUpperCase();
-        Pattern pattern = Pattern.compile("\\w{2}\\d{4}");
+        Pattern pattern = Pattern.compile("[A-Za-z]{2}\\d{4}");
         Matcher matcher = pattern.matcher(passportId);
-        if (matcher.matches()) {
-            return passportId;
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException("Passport Id is invalid");
         }
-        throw new IllegalArgumentException("Passport Id is invalid");
+        return passportId;
     }
 
     public void attachAccount(Account account) {

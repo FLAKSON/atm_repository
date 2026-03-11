@@ -1,5 +1,6 @@
 package org.maksymtiutiunnyk.atmproject.ui;
 
+import org.maksymtiutiunnyk.atmproject.entites.Account;
 import org.maksymtiutiunnyk.atmproject.entites.Card;
 import org.maksymtiutiunnyk.atmproject.entites.Customer;
 
@@ -73,6 +74,25 @@ public class ConsoleUi {
                 showError(e.getMessage());
             }
         }
+    }
+
+    public String cardBlank(String prompt) {
+        while (true) {
+            String result = readNonBlank(prompt);
+            try {
+                return Card.validateEnteredPan(result);
+            } catch (Exception e) {
+                showError(e.getMessage());
+            }
+        }
+    }
+
+    public void showBalance(Account account) {
+        println("Your balance: " + account.getAvailableBalance() + " " + account.getCurrency());
+    }
+
+    public void divideScreen() {
+        System.out.println("------------------------------------------------------------------------------");
     }
 
     public void showError(String error) {

@@ -41,4 +41,8 @@ public class Atm {
         atm.location = location;
         return atm;
     }
+
+    public void setAtmStatus(AtmStatuses atmStatus) {
+        this.status = atmStatus;
+    }
 }
