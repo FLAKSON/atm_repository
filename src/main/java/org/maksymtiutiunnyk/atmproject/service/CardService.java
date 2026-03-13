@@ -3,6 +3,7 @@ package org.maksymtiutiunnyk.atmproject.service;
 import jakarta.transaction.Transactional;
 import org.maksymtiutiunnyk.atmproject.entites.Account;
 import org.maksymtiutiunnyk.atmproject.entites.Card;
+import org.maksymtiutiunnyk.atmproject.entites.Customer;
 import org.maksymtiutiunnyk.atmproject.repositories.CardRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -12,7 +13,9 @@ import java.util.regex.Pattern;
 
 @Service
 public class CardService {
-    BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private static final BCryptPasswordEncoder PASSWORD_ENCODER = new BCryptPasswordEncoder();
+    private static final Pattern PAN_PATTERN = Pattern.compile("\\d{8}");
+    private static final Pattern PIN_PATTERN = Pattern.compile("\\d{4}");
 
     private final CardRepository cardRepository;
 
@@ -20,45 +23,50 @@ public class CardService {
         this.cardRepository = cardRepository;
     }
 
-    @Transactional
-    public String createPan(String passportId) {
-        if (passportId == null || passportId.length() < 6) {
-            throw new RuntimeException("Passport ID is null and must have at least 6 characters");
+    /*This method creates pan mask from user's passport ID.*/
+    private String createPan(String passportId) {
+        if (passportId == null) {
+            throw new IllegalArgumentException("Passport ID can't be null.");
+        }
+        if (passportId.length() < 6) {
+            throw new IllegalArgumentException("Passport ID must have at least 6 characters.");
         }
         char firstChar = Character.toUpperCase(passportId.charAt(0));
         char secondChar = Character.toUpperCase(passportId.charAt(1));
         if (firstChar < 'A' || firstChar > 'Z' || secondChar < 'A' || secondChar > 'Z') {
-            throw new RuntimeException("First two characters must be between A and Z");
+            throw new IllegalArgumentException("First two characters must be between A and Z.");
         }
         int v1 =  firstChar - '0';
         int v2 = secondChar - '0';
-        return new StringBuilder(passportId.length() + 2)
-                .append(v1)
-                .append(v2)
-                .append(passportId, 2, passportId.length())
-                .toString();
+        return String.valueOf(v1) + v2 + passportId.substring(2);
     }
 
+    /*A method that gets an account after checking the pin and card*/
     @Transactional
-    public String createHashPassword(String password) {
-        String normalizedPassword = password.trim();
-        if (normalizedPassword.isEmpty() || normalizedPassword.length() > 4) {
-            throw new RuntimeException("Password is null and must have at least 4 characters");
+    public Account getAccessToAccount(String pan, String pin) {
+        String normalizedPan = validatePan(pan);
+        String normalizedPin = validatePin(pin);
+        Card card = getCardByPan(normalizedPan);
+        if (!verifyCardAccess(card, normalizedPin)) {
+            throw new IllegalArgumentException("Invalid pan or pin provided.");
         }
-        Pattern pattern = Pattern.compile("^[a-zA-Z]+$");
-        Matcher matcher = pattern.matcher(normalizedPassword);
-        if (matcher.matches()) {
-            throw new RuntimeException("Password contains invalid characters");
-        }
-        return hashPassword(normalizedPassword);
+
+        return getAccountByCard(card);
     }
 
-    @Transactional
-    protected String hashPassword(String password) {
-        return passwordEncoder.encode(password);
+    private boolean verifyCardAccess(Card card, String pin) {
+        return PASSWORD_ENCODER.matches(pin, card.getPinHash());
     }
 
-    protected String validateEnteredPan(String pan) {
+    private Card getCardByPan(String pan) {
+        return cardRepository.findByPan(pan).orElseThrow(() -> new IllegalArgumentException("Card with this pan not found."));
+    }
+
+    private Account getAccountByCard(Card card) {
+        return card.getCustomer().getAccount();
+    }
+
+    private String validatePan(String pan) {
         if (pan == null) {
             throw  new IllegalArgumentException("Pan is null!");
         }
@@ -66,15 +74,13 @@ public class CardService {
         if (normalizedPan.isEmpty()) {
             throw new IllegalArgumentException("Pan is empty!");
         }
-        final Pattern pattern = Pattern.compile("\\d{8}");
-        final Matcher matcher = pattern.matcher(normalizedPan);
-        if (!matcher.matches()) {
+        if (!PAN_PATTERN.matcher(normalizedPan).matches()) {
             throw new IllegalArgumentException("Pan is invalid!");
         }
         return normalizedPan;
     }
 
-    protected String validateEnteredPin(String pin) {
+    private String validatePin(String pin) {
         if (pin == null) {
             throw  new IllegalArgumentException("Pin is null!");
         }
@@ -82,50 +88,39 @@ public class CardService {
         if (normalizedPin.isEmpty()) {
             throw new IllegalArgumentException("Pin is empty!");
         }
-        final Pattern pattern = Pattern.compile("\\d{4}");
-        final Matcher matcher = pattern.matcher(normalizedPin);
-        if (!matcher.matches()) {
+        if (!PIN_PATTERN.matcher(normalizedPin).matches()) {
             throw new IllegalArgumentException("Pin is invalid!");
         }
         return normalizedPin;
     }
 
-    protected final boolean passwordVerification(String enteredPin, String hashedPassword) {
-        return passwordEncoder.matches(enteredPin, hashedPassword);
-    }
-
     public void checkPan(String pan) {
-        try {
-            getCard(pan);
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage() + pan);
+        getCardByPan(pan);
+    }
+
+    /*A method that create a card.*/
+    public Card createCard(String passportId, Customer customer, String pin) {
+        return Card.createCard(createPan(passportId), customer, createHashedPin(pin));
+    }
+
+    /*A method that create hashed pin for card.*/
+    private String createHashedPin(String password) {
+        String normalizedPassword = password.trim();
+        if (normalizedPassword.isEmpty()) {
+            throw new IllegalArgumentException("Password is null.");
         }
-    }
-
-    @Transactional
-    public Account getAccessToAccountFromCard(String enteredPan, String enteredPin) {
-        enteredPan = validateEnteredPan(enteredPan);
-        enteredPin = validateEnteredPin(enteredPin);
-        getCard(enteredPan);
-        Card card = getCard(enteredPan);
-        String pinHash = getPinHash(card);
-        if (passwordVerification(enteredPin, pinHash)) {
-            return getAccountFromCard(card);
+        if (normalizedPassword.length() > 4) {
+            throw new IllegalArgumentException("Password must have 4 characters.");
         }
-        throw new IllegalArgumentException("Pin is invalid!");
+        Pattern pattern = Pattern.compile("^[a-zA-Z]+$");
+        Matcher matcher = pattern.matcher(normalizedPassword);
+        if (matcher.matches()) {
+            throw new IllegalArgumentException("Password contains invalid characters.");
+        }
+        return hashPassword(normalizedPassword);
     }
 
-    protected final Account getAccountFromCard(Card card) {
-        return card.getCustomer().getAccount();
-    }
-
-    protected final String getPinHash(Card card) {
-        return card.getPinHash();
-    }
-
-    protected final Card getCard(String pan) {
-        return cardRepository.findByPan(pan).orElseThrow
-                (() -> new IllegalArgumentException("Card with this pan not found: ")
-        );
+    private String hashPassword(String password) {
+        return PASSWORD_ENCODER.encode(password);
     }
 }

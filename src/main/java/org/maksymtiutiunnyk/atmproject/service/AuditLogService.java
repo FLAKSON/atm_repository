@@ -3,6 +3,7 @@ package org.maksymtiutiunnyk.atmproject.service;
 import jakarta.transaction.Transactional;
 import org.maksymtiutiunnyk.atmproject.entites.Atm;
 import org.maksymtiutiunnyk.atmproject.entites.AuditLog;
+import org.maksymtiutiunnyk.atmproject.entites.Card;
 import org.maksymtiutiunnyk.atmproject.enums.AuditLogActorsType;
 import org.maksymtiutiunnyk.atmproject.enums.AuditLogStatuses;
 import org.maksymtiutiunnyk.atmproject.enums.AuditSeverity;
@@ -10,6 +11,7 @@ import org.maksymtiutiunnyk.atmproject.repositories.AuditLogRepository;
 import org.springframework.stereotype.Service;
 
 @Service
+@Transactional
 public class AuditLogService {
 
     private final AuditLogRepository auditLogRepository;
@@ -18,14 +20,17 @@ public class AuditLogService {
         this.auditLogRepository = auditLogRepository;
     }
 
-    @Transactional
+    private void saveAudit(AuditLog auditLog) {
+        auditLogRepository.save(auditLog);
+    }
+
     public void registrationStarted(Atm atm) {
         saveAudit(
                 AuditLog.createAuditLog(
                 AuditLogStatuses.REGISTRATION_STARTED,
                 AuditLogActorsType.USER,
                 AuditSeverity.INFO,
-                "Registration user has begun",
+                "Registration user has begun.",
                 null,
                 atm,
                 null,
@@ -33,7 +38,7 @@ public class AuditLogService {
                 )
         );
     }
-    @Transactional
+
     public void registrationFailed(Atm atm, Exception e) {
         saveAudit(
                 AuditLog.createAuditLog(
@@ -48,22 +53,20 @@ public class AuditLogService {
                 )
         );
     }
-    @Transactional
-    public void registrationSuccessful(Atm atm) {
+
+    public void registrationSuccessful(Atm atm, Card card) {
          saveAudit(
                  AuditLog.createAuditLog(
                  AuditLogStatuses.REGISTRATION_SUCCESS,
                  AuditLogActorsType.USER,
                  AuditSeverity.INFO,
-                 "Registration successful",
+                 "Registration successful.",
                  null,
                  atm,
-                 null,
+                 card,
                  null
                  )
          );
     }
-    protected void saveAudit(AuditLog auditLog) {
-        auditLogRepository.save(auditLog);
-    }
+
 }

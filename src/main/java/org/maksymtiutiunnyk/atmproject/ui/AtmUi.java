@@ -1,39 +1,29 @@
 package org.maksymtiutiunnyk.atmproject.ui;
 
 import org.maksymtiutiunnyk.atmproject.entites.Atm;
-import org.maksymtiutiunnyk.atmproject.enums.AtmStatuses;
 import org.maksymtiutiunnyk.atmproject.service.AtmService;
 import org.maksymtiutiunnyk.atmproject.service.CardService;
+import org.maksymtiutiunnyk.atmproject.service.CustomerRegistrationService;
+import org.springframework.stereotype.Component;
 
+@Component
 public class AtmUi {
     private final CardService cardService;
     private final AtmService atmService;
+    private final CustomerRegistrationService customerRegistrationService;
 
-    public AtmUi(CardService cardService,  AtmService atmService) {
+    public AtmUi(CardService cardService,  AtmService atmService, CustomerRegistrationService customerRegistrationService) {
         this.cardService = cardService;
         this.atmService = atmService;
+        this.customerRegistrationService = customerRegistrationService;
     }
 
     private final ConsoleUi console = new ConsoleUi();
 
-    private void accountRegistrationMenu(Atm atm) {
-        console.println("Welcome to the Account Registration Menu!");
-        String passportId = console.passportBlank("Enter your passportId: ");
-        String name = console.nameBlank("Enter your name: ");
-        String surname = console.surnameBlank("Enter your surname: ");
-        String pin = console.pinBlank("Enter your pin: ");
-        String currency = "EUR";
-        try {
-            atmService.registerCustomer(name, surname, passportId, currency, pin, atm);
-            console.showSuccess("Account and Customer Registration Successful!");
-        } catch (Exception e) {
-            console.showError(e.getMessage());
-        }
-    }
-
     public void mainMenu(Atm atm) {
+        console.divideScreen();
         while (true) {
-            atmService.changeAtmStatus(atm, AtmStatuses.IN_SERVICE);
+            atmService.statInteraction(atm);
             console.println("Welcome to the Customer Menu!");
             console.println("1. Register (Register new account)");
             console.println("2. Insert Card (For control your balance or transaction)");
@@ -41,11 +31,13 @@ public class AtmUi {
             String choice = console.readNonBlank("Enter your choice: ");
             switch (choice) {
                 case "1":
-                    console.println("You have chosen to register! ");
+                    console.divideScreen();
+                    console.println("You have chosen to register!");
                     accountRegistrationMenu(atm);
+                    console.waitingInput();
                     break;
                 case "2":
-                    console.println("You have chosen to insert card! ");
+                    console.println("You have chosen to insert card!");
                     transactionOrBalanceMenu(atm);
                     break;
                 case "0":
@@ -57,21 +49,48 @@ public class AtmUi {
         }
     }
 
-    private void transactionOrBalanceMenu(Atm atm) {
-        console.println("1. Check balance");
-        console.println("2. Make transaction");
-        String choice = console.readNonBlank("Enter your choice: ");
-        switch (choice) {
-            case "1":
-                balanceMenu(atm);
-                break;
-            case "2":
-                console.println("You have chosen to make transaction! ");
-
+    private void accountRegistrationMenu(Atm atm) {
+        while (true) {
+            console.println("Welcome to the Account Registration Menu!");
+            String passportId = console.passportBlank("Enter your passportId: ");
+            String name = console.nameBlank("Enter your name: ");
+            String surname = console.surnameBlank("Enter your surname: ");
+            String pin = console.pinBlank("Enter your pin: ");
+            String currency = "EUR";
+            try {
+                customerRegistrationService.registerCustomer(name, surname, passportId, currency, pin, atm);
+                console.showSuccess("Account and Customer Registration Successful!");
+                return;
+            } catch (Exception e) {
+                console.showError(e.getMessage());
+            }
         }
     }
 
-    private void balanceMenu(Atm atm) {
+    private void transactionOrBalanceMenu(Atm atm) {
+        while (true) {
+            console.divideScreen();
+            console.println("Welcome to the Transaction Menu!");
+            console.println("1. Check balance");
+            console.println("2. Make transaction");
+            console.println("0. Back");
+            String choice = console.readNonBlank("Enter your choice: ");
+            switch (choice) {
+                case "1":
+                    balanceMenu();
+                    console.waitingInput();
+                    break;
+                case "2":
+                    console.println("You have chosen to make transaction! ");
+                    console.waitingInput();
+                    break;
+                case "0":
+                    return;
+            }
+        }
+    }
+
+    private void balanceMenu() {
         console.println("You have chosen to check balance! ");
         String cardNumber = console.cardBlank("Enter card number: ");
         while (true) {
@@ -86,19 +105,12 @@ public class AtmUi {
         String pin = console.pinBlank("Enter your pin: ");
         while (true) {
             try {
-                console.showBalance(atmService.checkBalance(cardNumber, pin));
+                console.showBalance(cardService.getAccessToAccount(cardNumber, pin));
                 break;
-            } catch (Exception e) {
+            } catch (IllegalArgumentException e) {
                 console.showError(e.getMessage());
                 pin = console.pinBlank("Enter valid pin: ");
             }
         }
     }
-
-    private void transactionMenu(Atm atm) {
-
-    }
-
-
-
 }

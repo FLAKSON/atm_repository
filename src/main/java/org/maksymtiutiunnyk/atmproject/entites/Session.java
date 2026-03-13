@@ -6,6 +6,9 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.maksymtiutiunnyk.atmproject.enums.SessionStatuses;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 @Entity
 @NoArgsConstructor
@@ -28,7 +31,10 @@ public class Session {
     private Atm atm;
 
     @Getter
-    private int failedPinAttempts = 3;
+    private int failedPinAttempts = 0;
+
+    @Getter
+    private int maxPinAttempts = 3;
 
     @Getter
     @CreationTimestamp
@@ -45,8 +51,42 @@ public class Session {
     @Getter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "selected_account_id")
-    private Account selectedAccount;
+    private Account account;
 
     @Getter
     private int timeOutSeconds = 15;
+
+    @Getter
+    @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Transaction> transactions = new ArrayList<>();
+
+    public static Session createSession(Card card, Atm atm, Account account) {
+        Objects.requireNonNull(card, "Card can't be null");
+        Objects.requireNonNull(atm, "Atm can't be null");
+        Objects.requireNonNull(account, "Account can't be null");
+        Session session = new Session();
+        session.card = card;
+        session.atm = atm;
+        session.account = account;
+        return session;
+    }
+
+    public void addTransaction(Transaction transaction) {
+        Objects.requireNonNull(transaction, "Transaction can't be null");
+        transactions.add(transaction);
+        transaction.addSession(this);
+    }
+
+    public void closeSession() {
+        this.endTime = LocalDateTime.now();
+        this.status = SessionStatuses.ENDED;
+    }
+
+    public void authorizedSession() {
+        this.status = SessionStatuses.AUTHORIZED;
+    }
+
+    public void addFailedPinAttempts() {
+        this.failedPinAttempts++;
+    }
 }

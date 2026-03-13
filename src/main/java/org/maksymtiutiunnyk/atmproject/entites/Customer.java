@@ -81,7 +81,7 @@ public class Customer {
         return validator(surname);
     }
 
-    protected static String  validator(String nameOrSurname) {
+    protected static String validator(String nameOrSurname) {
         String validateNameOrSurname = nameOrSurname.trim().toUpperCase();
         if (validateNameOrSurname.length() < 2 || validateNameOrSurname.length() > 20) {
             throw new IllegalArgumentException("Length must be between 2 and 20");

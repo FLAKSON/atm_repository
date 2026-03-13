@@ -71,7 +71,7 @@ public class Transaction {
     private String errorReason;
 
     @Getter
-    @JoinColumn(name = "session_id")
+    @JoinColumn(name = "session_id", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
     private Session session;
 
@@ -141,6 +141,10 @@ public class Transaction {
             return "UNKNOW";
         }
         return reason.trim();
+    }
+
+    public void addSession(Session session) {
+        this.session = session;
     }
 }
 

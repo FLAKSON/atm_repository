@@ -64,7 +64,7 @@ public class Card {
         return card;
     }
 
-    protected static String validatePan(String pan) {
+    private static void validatePan(String pan) {
         String normalizedPan = pan.trim();
         if (normalizedPan.isEmpty()) {
             throw new IllegalArgumentException("Pan is null or empty");
@@ -73,11 +73,9 @@ public class Card {
             throw new IllegalArgumentException("Pan length is not 8 characters");
         }
         Pattern pattern = Pattern.compile("^[a-zA-Z]+$");
-        Matcher matcher = pattern.matcher(normalizedPan);
-        if (matcher.matches()) {
+        if (pattern.matcher(normalizedPan).matches()) {
             throw new IllegalArgumentException("Pan contains invalid characters");
         }
-        return normalizedPan;
     }
 
     public static String validatePin(String pin) {

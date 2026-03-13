@@ -4,14 +4,12 @@ import org.maksymtiutiunnyk.atmproject.entites.Account;
 import org.maksymtiutiunnyk.atmproject.entites.Card;
 import org.maksymtiutiunnyk.atmproject.entites.Customer;
 
+import java.io.IOException;
 import java.util.Scanner;
 
 public class ConsoleUi {
-    private final Scanner scanner;
+    private final static Scanner scanner = new Scanner(System.in);
 
-    public ConsoleUi() {
-        this.scanner = new Scanner(System.in);
-    }
 
     public void println(String message) {
         System.out.println(message);
@@ -93,6 +91,12 @@ public class ConsoleUi {
 
     public void divideScreen() {
         System.out.println("------------------------------------------------------------------------------");
+    }
+
+    public void waitingInput() {
+        println("Press enter to continue...");
+        Scanner scanner = new Scanner(System.in);
+        scanner.nextLine();
     }
 
     public void showError(String error) {

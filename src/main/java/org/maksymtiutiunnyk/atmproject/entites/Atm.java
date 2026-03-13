@@ -23,6 +23,7 @@ public class Atm {
 
     @Getter
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private AtmStatuses status = AtmStatuses.AWAITING;
 
     @Getter
