@@ -1,24 +1,24 @@
 package org.maksymtiutiunnyk.atmproject.ui;
 
 import org.maksymtiutiunnyk.atmproject.entites.Atm;
-import org.maksymtiutiunnyk.atmproject.service.AtmService;
-import org.maksymtiutiunnyk.atmproject.service.CardService;
-import org.maksymtiutiunnyk.atmproject.service.CustomerRegistrationService;
+import org.maksymtiutiunnyk.atmproject.service.*;
 import org.springframework.stereotype.Component;
 
 @Component
 public class AtmUi {
+
     private final CardService cardService;
     private final AtmService atmService;
     private final CustomerRegistrationService customerRegistrationService;
+    private final ConsoleUi console;
 
-    public AtmUi(CardService cardService,  AtmService atmService, CustomerRegistrationService customerRegistrationService) {
+    public AtmUi(CardService cardService,  AtmService atmService, CustomerRegistrationService customerRegistrationService, ConsoleUi console) {
         this.cardService = cardService;
         this.atmService = atmService;
         this.customerRegistrationService = customerRegistrationService;
+        this.console = console;
     }
 
-    private final ConsoleUi console = new ConsoleUi();
 
     public void mainMenu(Atm atm) {
         console.divideScreen();

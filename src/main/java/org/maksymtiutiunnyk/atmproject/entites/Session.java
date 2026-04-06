@@ -72,21 +72,39 @@ public class Session {
     }
 
     public void addTransaction(Transaction transaction) {
+        insureAllowedSession();
+        if (this.status != SessionStatuses.AUTHORIZED) {
+            throw new IllegalStateException("Adding transactions allowed only for authorized session.");
+        }
         Objects.requireNonNull(transaction, "Transaction can't be null");
         transactions.add(transaction);
         transaction.addSession(this);
     }
 
     public void closeSession() {
+        if (this.status != SessionStatuses.AUTHORIZED) {
+            throw new IllegalStateException("Closing session allowed only for authorized session.");
+        }
         this.endTime = LocalDateTime.now();
         this.status = SessionStatuses.ENDED;
     }
 
     public void authorizedSession() {
+        insureAllowedSession();
+        if (this.status != SessionStatuses.UNAUTHORIZED) {
+            throw new IllegalStateException("Authorized session allowed only for unauthorized session.");
+        }
         this.status = SessionStatuses.AUTHORIZED;
     }
 
     public void addFailedPinAttempts() {
         this.failedPinAttempts++;
+    }
+
+    public void insureAllowedSession() {
+        if (this.failedPinAttempts == 3) {
+            closeSession();
+            throw new IllegalStateException("Session has been closed.");
+        }
     }
 }

@@ -3,14 +3,12 @@ package org.maksymtiutiunnyk.atmproject.ui;
 import org.maksymtiutiunnyk.atmproject.entites.Account;
 import org.maksymtiutiunnyk.atmproject.entites.Card;
 import org.maksymtiutiunnyk.atmproject.entites.Customer;
+import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.util.Scanner;
-
+@Component
 public class ConsoleUi {
     private final static Scanner scanner = new Scanner(System.in);
-
-
     public void println(String message) {
         System.out.println(message);
     }

@@ -1,6 +1,5 @@
 package org.maksymtiutiunnyk.atmproject.service;
 
-import jakarta.transaction.Transactional;
 import org.maksymtiutiunnyk.atmproject.entites.Account;
 import org.maksymtiutiunnyk.atmproject.entites.Atm;
 import org.maksymtiutiunnyk.atmproject.entites.Card;
