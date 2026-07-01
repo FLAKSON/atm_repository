@@ -1,6 +1,7 @@
-package org.maksymtiutiunnyk.atmproject.entites;
+package org.maksymtiutiunnyk.atmproject.entities;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -12,7 +13,7 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "transactions")
 public class Transaction {
     @Id
@@ -43,8 +44,7 @@ public class Transaction {
     private LocalDateTime createdAt;
 
     @Getter
-    @Column(nullable = false)
-    private LocalDateTime finalizedAt;
+    private LocalDateTime endedAt;
 
     @Getter
     @JoinColumn(name = "atm_id", nullable = false)
@@ -81,69 +81,65 @@ public class Transaction {
             Atm atm,
             Card card,
             Account account,
-            Account targetAccount,
-            Session session
+            Account targetAccount
     ) {
-        Objects.requireNonNull(transactionType, "transactionType is null");
-        Objects.requireNonNull(atm, "atm is null");
-        Objects.requireNonNull(card, "card is null");
-        Objects.requireNonNull(account, "account is null");
-        Objects.requireNonNull(session, "session is null");
-
+        Objects.requireNonNull(transactionType, "Transaction type cannot be null");
+        Objects.requireNonNull(atm, "Atm cannot be null");
+        Objects.requireNonNull(card, "Card cannot be null");
+        Objects.requireNonNull(account, "Account cannot be null");
         if (amount <= 0) {
-            throw new IllegalArgumentException("amount is negative");
+            throw new IllegalArgumentException("Amount is negative or zero");
         }
         if (transactionType == TransactionTypes.TRANSFER && targetAccount == null) {
-            throw new IllegalArgumentException("targetAccount is null");
+            throw new IllegalArgumentException("Target account cannot null");
         }
         Transaction transaction = new Transaction();
         transaction.type = transactionType;
         transaction.amount = amount;
-        transaction.createdAt = LocalDateTime.now();
         transaction.atm = atm;
         transaction.card = card;
         transaction.account = account;
         transaction.targetAccount = targetAccount;
-        transaction.session = session;
         return transaction;
     }
     public void ensurePending() {
         if (this.status != TransactionStatuses.PENDING) {
-            throw new IllegalStateException("Transaction must be PENDING, Current status: " + status);
+            throw new IllegalStateException("Transaction must be pending.");
         }
     }
 
-    public void approved() {
+    public void approve() {
         ensurePending();
         this.status = TransactionStatuses.APPROVED;
         this.errorReason = null;
-        this.finalizedAt = LocalDateTime.now();
+        this.endedAt = LocalDateTime.now();
     }
 
     public void decline(String reason) {
         ensurePending();
         this.status = TransactionStatuses.DECLINED;
         this.errorReason = normalizeErrorReason(reason);
-        this.finalizedAt = LocalDateTime.now();
+        this.endedAt = LocalDateTime.now();
     }
 
     public void reverse(String reason) {
         if (this.status != TransactionStatuses.APPROVED && this.status != TransactionStatuses.PENDING) {
-            throw new IllegalStateException("Transaction must be APPROVED or PENDING, Current status: " + status);
+            throw new IllegalStateException("Transaction must be approved or pending");
         }
         this.status = TransactionStatuses.REVERSED;
         this.errorReason = normalizeErrorReason(reason);
-        this.finalizedAt = LocalDateTime.now();
+        this.endedAt = LocalDateTime.now();
     }
 
     public String normalizeErrorReason(String reason) {
         if (reason == null || reason.isEmpty()) {
-            return "UNKNOW";
+            return "UNKNOWN";
         }
         return reason.trim();
     }
 
     public void addSession(Session session) {
+        Objects.requireNonNull(session, "Session cannot be null");
         this.session = session;
     }
 }

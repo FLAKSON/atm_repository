@@ -1,10 +1,11 @@
 package org.maksymtiutiunnyk.atmproject.service;
 
-import org.maksymtiutiunnyk.atmproject.entites.Account;
-import org.maksymtiutiunnyk.atmproject.entites.Atm;
-import org.maksymtiutiunnyk.atmproject.entites.Card;
-import org.maksymtiutiunnyk.atmproject.entites.Customer;
+import org.maksymtiutiunnyk.atmproject.entities.Account;
+import org.maksymtiutiunnyk.atmproject.entities.Atm;
+import org.maksymtiutiunnyk.atmproject.entities.Card;
+import org.maksymtiutiunnyk.atmproject.entities.Customer;
 import org.maksymtiutiunnyk.atmproject.repositories.CustomerRepository;
+import org.maksymtiutiunnyk.atmproject.validation.InputValidator;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -22,7 +23,7 @@ public class CustomerRegistrationService {
     public void registerCustomer(String name, String surname, String passportId, String currency, String pin, Atm atm) {
         auditLogService.registrationStarted(atm);
         try {
-            passportId = Customer.validatePassportFormat(passportId);
+            passportId = InputValidator.validatePassportId(passportId);
             if (customerRepository.existsByPassportId(passportId)) {
                 throw new IllegalArgumentException("Customer with this passport id already exists");
             }

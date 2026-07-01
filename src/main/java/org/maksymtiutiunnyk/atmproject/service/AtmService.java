@@ -1,11 +1,17 @@
 package org.maksymtiutiunnyk.atmproject.service;
 
 import jakarta.transaction.Transactional;
-import org.maksymtiutiunnyk.atmproject.entites.Atm;
+import org.maksymtiutiunnyk.atmproject.entities.Atm;
+import org.maksymtiutiunnyk.atmproject.entities.Cassette;
 import org.maksymtiutiunnyk.atmproject.enums.AtmStatuses;
+import org.maksymtiutiunnyk.atmproject.enums.DenominationTypes;
 import org.maksymtiutiunnyk.atmproject.repositories.AtmRepository;
 
 import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 @Service
@@ -41,4 +47,11 @@ public class AtmService {
     public void statInteraction(Atm atm) {
         changeAtmStatus(atm, AtmStatuses.IN_SERVICE);
     }
+
+    @Transactional
+    public void adminInteraction(Atm atm) {
+        changeAtmStatus(atm, AtmStatuses.MAINTENANCE);
+    }
+
+
 }

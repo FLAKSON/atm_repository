@@ -1,13 +1,14 @@
 package org.maksymtiutiunnyk.atmproject.service;
 
 import jakarta.transaction.Transactional;
-import org.maksymtiutiunnyk.atmproject.entites.Account;
-import org.maksymtiutiunnyk.atmproject.entites.Card;
-import org.maksymtiutiunnyk.atmproject.entites.Customer;
+import org.maksymtiutiunnyk.atmproject.entities.Account;
+import org.maksymtiutiunnyk.atmproject.entities.Card;
+import org.maksymtiutiunnyk.atmproject.entities.Customer;
 import org.maksymtiutiunnyk.atmproject.repositories.CardRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,17 +42,30 @@ public class CardService {
         return String.valueOf(v1) + v2 + passportId.substring(2);
     }
 
+    public String getPanToViewUser(String passportId) {
+        return createPan(passportId);
+    }
+
     /*A method that gets an account after checking the pin and card*/
     @Transactional
     public Account getAccessToAccount(String pan, String pin) {
-        String normalizedPan = validatePan(pan);
-        String normalizedPin = validatePin(pin);
-        Card card = getCardByPan(normalizedPan);
-        if (!verifyCardAccess(card, normalizedPin)) {
-            throw new IllegalArgumentException("Invalid pan or pin provided.");
-        }
+            String normalizedPan = validatePan(pan);
+            String normalizedPin = validatePin(pin);
+            Card card = getCardByPan(normalizedPan);
+            if (!verifyCardAccess(card, normalizedPin)) {
+                throw new IllegalArgumentException("Invalid pan or pin provided.");
+            }
+            return getAccountByCard(card);
+    }
 
-        return getAccountByCard(card);
+    @Transactional
+    public Account getAccessToAccount(String pan, boolean isAuthorized) {
+        if (!isAuthorized) {
+            throw new IllegalArgumentException("Access to account is not authorized.");
+        }
+        else {
+            return getAccountByCard(getCardByPan(pan));
+        }
     }
 
     private boolean verifyCardAccess(Card card, String pin) {
@@ -62,7 +76,7 @@ public class CardService {
         return cardRepository.findByPan(pan).orElseThrow(() -> new IllegalArgumentException("Card with this pan not found."));
     }
 
-    private Account getAccountByCard(Card card) {
+    private static Account getAccountByCard(Card card) {
         return card.getCustomer().getAccount();
     }
 
@@ -81,9 +95,7 @@ public class CardService {
     }
 
     private String validatePin(String pin) {
-        if (pin == null) {
-            throw  new IllegalArgumentException("Pin is null!");
-        }
+        Objects.requireNonNull(Objects.requireNonNull(pin, "Pin is null!"));
         String normalizedPin = pin.trim();
         if (normalizedPin.isEmpty()) {
             throw new IllegalArgumentException("Pin is empty!");
@@ -96,6 +108,10 @@ public class CardService {
 
     public void checkPan(String pan) {
         getCardByPan(pan);
+    }
+
+    public Card getCard(String pan) {
+        return getCardByPan(pan);
     }
 
     /*A method that create a card.*/
@@ -123,4 +139,5 @@ public class CardService {
     private String hashPassword(String password) {
         return PASSWORD_ENCODER.encode(password);
     }
+
 }

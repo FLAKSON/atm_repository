@@ -1,9 +1,9 @@
 package org.maksymtiutiunnyk.atmproject.service;
 
 import jakarta.transaction.Transactional;
-import org.maksymtiutiunnyk.atmproject.entites.Atm;
-import org.maksymtiutiunnyk.atmproject.entites.AuditLog;
-import org.maksymtiutiunnyk.atmproject.entites.Card;
+import org.maksymtiutiunnyk.atmproject.entities.Atm;
+import org.maksymtiutiunnyk.atmproject.entities.AuditLog;
+import org.maksymtiutiunnyk.atmproject.entities.Card;
 import org.maksymtiutiunnyk.atmproject.enums.AuditLogActorsType;
 import org.maksymtiutiunnyk.atmproject.enums.AuditLogStatuses;
 import org.maksymtiutiunnyk.atmproject.enums.AuditSeverity;
@@ -69,4 +69,48 @@ public class AuditLogService {
          );
     }
 
+    public void cassetteInserted(Atm atm) {
+        saveAudit(
+                AuditLog.createAuditLog(
+                        AuditLogStatuses.CASSETTE_STATUS_CHANGED,
+                        AuditLogActorsType.ADMIN,
+                        AuditSeverity.SECURITY,
+                        "Cassette has been inserting.",
+                        null,
+                        atm,
+                        null,
+                        null
+                )
+        );
+    }
+
+    public void cassetteUpdated(Atm atm) {
+        saveAudit(
+                AuditLog.createAuditLog(
+                        AuditLogStatuses.CASSETTE_STATUS_CHANGED,
+                        AuditLogActorsType.ADMIN,
+                        AuditSeverity.SECURITY,
+                        "Cassette has been update",
+                        null,
+                        atm,
+                        null,
+                        null
+                )
+        );
+    }
+
+    public void cassetteDeleted(Atm atm) {
+        saveAudit(
+                AuditLog.createAuditLog(
+                        AuditLogStatuses.CASSETTE_STATUS_CHANGED,
+                        AuditLogActorsType.ADMIN,
+                        AuditSeverity.SECURITY,
+                        "Cassette has been deleted",
+                        null,
+                        atm,
+                        null,
+                        null
+                )
+        );
+    }
 }

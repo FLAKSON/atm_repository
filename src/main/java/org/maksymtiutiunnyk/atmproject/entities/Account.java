@@ -1,6 +1,7 @@
-package org.maksymtiutiunnyk.atmproject.entites;
+package org.maksymtiutiunnyk.atmproject.entities;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -8,13 +9,13 @@ import java.util.List;
 import java.util.Objects;
 
 @Entity
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "accounts")
 public class Account {
     @Id
     @Getter
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(nullable = false, unique = true, updatable = false)
+    @Column(nullable = false, updatable = false)
     private Long id;
 
     @Getter
@@ -50,12 +51,22 @@ public class Account {
     private List<Transaction> transactions;
 
      public static Account createAccount(Customer customer, String currency) {
-         Objects.requireNonNull(customer, "customer is null");
-         Objects.requireNonNull(currency, "currency is null");
-
+         Objects.requireNonNull(customer, "Customer is null");
+         Objects.requireNonNull(currency, "Currency is null");
          Account account = new Account();
          account.customer = customer;
          account.currency = currency;
          return account;
+     }
+
+     public void withdraw(long amount) {
+         if (amount > perTransactionLimit) {
+             throw new IllegalArgumentException("Amount is greater than Per Transaction Limit: " + perTransactionLimit);
+         }
+         if (amount <= 0) {
+             throw new IllegalArgumentException("Amount must be greater than zero.");
+         }
+         dailyWithdrawLimitUsed += amount;
+         availableBalance -= amount;
      }
 }

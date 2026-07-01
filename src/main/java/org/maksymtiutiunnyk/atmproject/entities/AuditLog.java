@@ -1,6 +1,7 @@
-package org.maksymtiutiunnyk.atmproject.entites;
+package org.maksymtiutiunnyk.atmproject.entities;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
@@ -12,7 +13,7 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "audit_logs")
 public class AuditLog {
     @Id

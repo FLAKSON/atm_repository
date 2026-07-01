@@ -1,26 +1,29 @@
 package org.maksymtiutiunnyk.atmproject.ui;
 
-import org.maksymtiutiunnyk.atmproject.entites.Account;
-import org.maksymtiutiunnyk.atmproject.entites.Card;
-import org.maksymtiutiunnyk.atmproject.entites.Customer;
+import org.maksymtiutiunnyk.atmproject.entities.Account;
+import org.maksymtiutiunnyk.atmproject.validation.InputValidator;
 import org.springframework.stereotype.Component;
 
 import java.util.Scanner;
 @Component
 public class ConsoleUi {
     private final static Scanner scanner = new Scanner(System.in);
+
+    // Просто упрощение принта.
     public void println(String message) {
         System.out.println(message);
     }
 
+    // Ожидание ввода
     public String printReadLine(String prompt) {
         println(prompt);
         return scanner.nextLine();
     }
 
+    // Проверка что ввод не пуст.
     public String readNonBlank(String prompt) {
         while (true) {
-            String result = printReadLine(prompt).trim();
+            String result = printReadLine(prompt);
             if (!result.isEmpty()) {
                 return result;
             }
@@ -28,33 +31,36 @@ public class ConsoleUi {
         }
     }
 
-    public String nameBlank(String prompt) {
+    // Валидация имени.
+    public String nameBlank(String name) {
         while (true) {
-            String result = readNonBlank(prompt).toUpperCase().trim();
+            String result = readNonBlank(name);
             try {
-                return Customer.validateName(result);
+                return InputValidator.validateName(result);
             } catch (IllegalArgumentException e) {
                 showError(e.getMessage());
             }
         }
     }
 
+    // Валидация фамилии.
     public String surnameBlank(String prompt) {
         while (true) {
-            String result = readNonBlank(prompt).toUpperCase().trim();
+            String result = readNonBlank(prompt);
             try {
-                return Customer.validateSurname(result);
+                return InputValidator.validateSurname(result);
             } catch (IllegalArgumentException e) {
                 showError(e.getMessage());
             }
         }
     }
 
-    public String passportBlank(String prompt) {
+    // Валидация паспорта
+    public String passportBlank(String passport) {
         while (true) {
-            String result = readNonBlank(prompt).toUpperCase().trim();
+            String result = readNonBlank(passport);
             try {
-                return Customer.validatePassportFormat(result);
+                return InputValidator.validatePassportId(result);
             } catch (Exception e) {
                 showError(e.getMessage());
             }
@@ -65,7 +71,7 @@ public class ConsoleUi {
         while (true) {
             String result = readNonBlank(prompt);
             try {
-                return Card.validatePin(result);
+                return InputValidator.validatePin(result);
             } catch (Exception e) {
                 showError(e.getMessage());
             }
@@ -76,7 +82,7 @@ public class ConsoleUi {
         while (true) {
             String result = readNonBlank(prompt);
             try {
-                return Card.validateEnteredPan(result);
+                return InputValidator.validatePan(result);
             } catch (Exception e) {
                 showError(e.getMessage());
             }

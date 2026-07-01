@@ -1,9 +1,9 @@
-package org.maksymtiutiunnyk.atmproject.entites;
+package org.maksymtiutiunnyk.atmproject.entities;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
 import org.maksymtiutiunnyk.atmproject.enums.SessionStatuses;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Entity
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "sessions")
 public class Session {
     @Id
@@ -37,16 +37,19 @@ public class Session {
     private int maxPinAttempts = 3;
 
     @Getter
-    @CreationTimestamp
-    private LocalDateTime startTime;
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime startedAt;
 
     @Getter
-    @Column(nullable = false)
-    private LocalDateTime endTime;
+    private LocalDateTime authorizedAt;
+
+    @Getter
+    private LocalDateTime endedAt;
 
     @Getter
     @Enumerated(EnumType.STRING)
-    private SessionStatuses status = SessionStatuses.UNAUTHORIZED;
+    @Column(nullable = false)
+    private SessionStatuses status;
 
     @Getter
     @ManyToOne(fetch = FetchType.LAZY)
@@ -54,13 +57,10 @@ public class Session {
     private Account account;
 
     @Getter
-    private int timeOutSeconds = 15;
-
-    @Getter
     @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Transaction> transactions = new ArrayList<>();
 
-    public static Session createSession(Card card, Atm atm, Account account) {
+    public static Session start(Card card, Atm atm, Account account) {
         Objects.requireNonNull(card, "Card can't be null");
         Objects.requireNonNull(atm, "Atm can't be null");
         Objects.requireNonNull(account, "Account can't be null");
@@ -68,42 +68,59 @@ public class Session {
         session.card = card;
         session.atm = atm;
         session.account = account;
+        session.startedAt = LocalDateTime.now();
+        session.status = SessionStatuses.UNAUTHORIZED;
         return session;
     }
 
+    public void authorize() {
+        ensureNotEnded();
+        if (this.status != SessionStatuses.UNAUTHORIZED) {
+            throw new IllegalStateException("Session is not waiting for authorization.");
+        }
+        this.status = SessionStatuses.AUTHORIZED;
+        this.authorizedAt = LocalDateTime.now();
+    }
+
+    public void close() {
+        if (status == SessionStatuses.ENDED) {
+            return;
+        }
+        this.status = SessionStatuses.ENDED;
+        this.endedAt = LocalDateTime.now();
+    }
+
     public void addTransaction(Transaction transaction) {
-        insureAllowedSession();
+        ensureNotEnded();
+        Objects.requireNonNull(transaction, "Transaction can't be null");
         if (this.status != SessionStatuses.AUTHORIZED) {
             throw new IllegalStateException("Adding transactions allowed only for authorized session.");
         }
-        Objects.requireNonNull(transaction, "Transaction can't be null");
-        transactions.add(transaction);
+        this.transactions.add(transaction);
         transaction.addSession(this);
     }
 
-    public void closeSession() {
-        if (this.status != SessionStatuses.AUTHORIZED) {
-            throw new IllegalStateException("Closing session allowed only for authorized session.");
-        }
-        this.endTime = LocalDateTime.now();
-        this.status = SessionStatuses.ENDED;
+    public boolean isEnded() {
+        return status == SessionStatuses.ENDED;
     }
 
-    public void authorizedSession() {
-        insureAllowedSession();
+    public void registerFailedPinAttempt() {
+        ensureNotEnded();
         if (this.status != SessionStatuses.UNAUTHORIZED) {
-            throw new IllegalStateException("Authorized session allowed only for unauthorized session.");
+            throw new IllegalStateException("Cannot register failed pin attempts for authorized session.");
         }
-        this.status = SessionStatuses.AUTHORIZED;
-    }
-
-    public void addFailedPinAttempts() {
         this.failedPinAttempts++;
+        if (this.failedPinAttempts >= maxPinAttempts) {
+            close();
+        }
     }
 
-    public void insureAllowedSession() {
-        if (this.failedPinAttempts == 3) {
-            closeSession();
+    public boolean isAuthorized() {
+        return status == SessionStatuses.AUTHORIZED;
+    }
+
+    private void ensureNotEnded() {
+        if (this.status == SessionStatuses.ENDED) {
             throw new IllegalStateException("Session has been closed.");
         }
     }
